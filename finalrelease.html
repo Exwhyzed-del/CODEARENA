@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeArena | Competitive Coding Platform</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-input: #334155;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            
+            --font-mono: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Utilities --- */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .p-4 { padding: 1rem; }
+        .w-full { width: 100%; }
+        .text-sm { font-size: 0.85rem; }
+        .text-xs { font-size: 0.75rem; }
+        .text-xl { font-size: 1.25rem; font-weight: 700; }
+        .text-center { text-align: center; }
+        .font-mono { font-family: var(--font-mono); }
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-muted { color: var(--text-muted); }
+        
+        /* --- UI Components --- */
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        button:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        button:active { transform: translateY(0); }
+        
+        .btn-primary { background: var(--accent-primary); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .btn-secondary { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-success { background: var(--success); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-link { background: transparent; color: var(--accent-primary); padding: 0; text-decoration: underline; }
+        
+        input, select {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--accent-primary); }
+
+        /* --- Toast Notification System --- */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--bg-panel);
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 280px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* --- Authentication Screen --- */
+        #auth-view {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at top right, #1e293b 0%, #0f172a 60%);
+        }
+        .auth-card {
+            background: var(--bg-panel);
+            padding: 2.5rem;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+        }
+        .logo-text { font-size: 2rem; font-weight: 800; background: linear-gradient(to right, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+
+        /* --- Dashboard --- */
+        #dashboard-view {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .room-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+            position: relative;
+        }
+        .room-card.local-room { border-color: var(--accent-secondary); box-shadow: 0 0 15px rgba(139, 92, 246, 0.2); }
+        .room-card:hover { transform: translateY(-4px); border-color: var(--accent-primary); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .local-badge { background: rgba(139, 92, 246, 0.2); color: var(--accent-secondary); }
+
+        /* --- Arena (Game Interface) --- */
+        #arena-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .arena-header {
+            height: 60px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+        }
+        .arena-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Panel: Problem & Code */
+        .main-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); }
+        .split-view { display: flex; flex: 1; overflow: hidden; }
+        .problem-pane { width: 40%; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: #161e2e; }
+        .editor-pane { width: 60%; display: flex; flex-direction: column; background: #0d1117; position: relative; }
+
+        .problem-header, .editor-header {
+            padding: 10px 15px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .problem-content { padding: 1.5rem; overflow-y: auto; line-height: 1.6; font-size: 0.95rem; color: #cbd5e1; }
+        .problem-content h3 { color: var(--text-main); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+        .problem-content h3:first-child { margin-top: 0; }
+        .problem-content pre { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; font-family: var(--font-mono); overflow-x: auto; margin: 10px 0; border: 1px solid var(--border); }
+
+        /* Custom Code Editor UI */
+        .editor-wrapper { flex: 1; display: flex; position: relative; overflow: hidden; }
+        .line-numbers {
+            width: 45px;
+            background: #0d1117;
+            color: #4b5563;
+            text-align: right;
+            padding: 15px 10px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.5;
+            user-select: none;
+            border-right: 1px solid #1f2937;
+        }
+        textarea#code-editor {
+            flex: 1;
+            background: transparent;
+            color: #e2e8f0;
+            border: none;
+            padding: 15px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            white-space: pre;
+            overflow: auto;
+            tab-size: 4;
+        }
+        textarea#code-editor::selection { background: rgba(59, 130, 246, 0.3); }
+        
+        .save-indicator {
+            position: absolute;
+            top: 50px; right: 10px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .save-indicator.visible { opacity: 1; color: var(--success); }
+
+        /* Right Panel: Social */
+        .side-panel { width: 320px; background: var(--bg-panel); display: flex; flex-direction: column; border-left: 1px solid var(--border); }
+        .panel-block { flex: 1; display: flex; flex-direction: column; min-height: 0; border-bottom: 1px solid var(--border); }
+        .panel-title { padding: 12px; background: rgba(0,0,0,0.2); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+
+        /* Leaderboard */
+        .leaderboard { overflow-y: auto; flex: 1; }
+        .lb-row { display: flex; align-items: center; padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; }
+        .lb-row:hover { background: rgba(255,255,255,0.02); }
+        .lb-row.highlight { background: rgba(59, 130, 246, 0.15); border-left: 3px solid var(--accent-primary); }
+        .lb-rank { width: 30px; font-weight: 700; color: var(--text-muted); font-size: 0.9rem; }
+        .lb-info { flex: 1; margin-left: 10px; }
+        .lb-name { font-weight: 600; font-size: 0.9rem; }
+        .lb-lang { font-size: 0.75rem; color: var(--text-muted); }
+        .lb-score { font-family: var(--font-mono); font-weight: 700; color: var(--accent-primary); }
+
+        /* Chat */
+        .chat-box { flex: 1; display: flex; flex-direction: column; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .chat-msg { font-size: 0.85rem; line-height: 1.4; word-break: break-word; }
+        .chat-sender { font-weight: 700; color: var(--accent-secondary); margin-right: 5px; }
+        .chat-sender.system { color: var(--warning); font-style: italic; }
+        .chat-input-area { padding: 10px; background: var(--bg-panel); border-top: 1px solid var(--border); display: flex; gap: 8px; }
+
+        /* Console Output */
+        #console-drawer {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 0;
+            background: #111827;
+            border-top: 1px solid var(--border);
+            transition: height 0.3s ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        #console-drawer.open { height: 35%; }
+        .console-header { padding: 8px 15px; background: #1f2937; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .console-output { flex: 1; padding: 15px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.9rem; color: #d1d5db; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px; }
+        .log-success { color: var(--success); }
+        .log-error { color: var(--danger); }
+        .log-info { color: var(--accent-primary); }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            z-index: 5000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal {
+            background: var(--bg-panel);
+            width: 90%; max-width: 450px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            animation: scaleIn 0.2s ease;
+        }
+        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); font-weight: 700; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: rgba(0,0,0,0.2); }
+
+        .prob-select-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .prob-select-item:hover { background: rgba(255,255,255,0.05); }
+        .prob-select-item.active { border-color: var(--accent-primary); background: rgba(59, 130, 246, 0.1); }
+        
+        @media (max-width: 1024px) {
+            .split-view { flex-direction: column; overflow-y: auto; }
+            .problem-pane, .editor-pane { width: 100%; height: 50%; }
+            .side-panel { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- 1. AUTHENTICATION VIEW -->
+    <section id="auth-view">
+        <div class="auth-card">
+            <div class="logo-text text-center">CodeArena</div>
+            <p class="text-muted text-center" style="margin-bottom: 2rem;">The Ultimate Competitive Coding Platform</p>
+            
+            <div id="auth-container">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. DASHBOARD VIEW -->
+    <section id="dashboard-view" class="hidden">
+        <header class="flex justify-between items-center" style="margin-bottom: 2rem;">
+            <div>
+                <div class="logo-text" style="font-size: 1.5rem; margin-bottom: 0;">CodeArena</div>
+                <div class="text-muted text-sm">Welcome back, <span id="dash-username" class="text-main">Player</span></div>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn-secondary" onclick="game.refreshLobby()">Refresh</button>
+                <button class="btn-danger" onclick="auth.logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="flex justify-between items-center">
+            <h3 class="text-xl">Active Battles</h3>
+            <div class="flex gap-2">
+                <button class="btn-secondary" onclick="ui.openModal('join-modal')">Join Room</button>
+                <button class="btn-primary" onclick="ui.openModal('create-modal')">+ Create Battle</button>
+            </div>
+        </div>
+
+        <div id="lobby-list" class="room-grid">
+            <!-- Rooms injected here -->
+        </div>
+    </section>
+
+    <!-- 3. ARENA VIEW -->
+    <section id="arena-view" class="hidden">
+        <header class="arena-header">
+            <div class="flex items-center gap-4">
+                <div class="logo-text" style="font-size: 1.2rem; margin:0;">CodeArena</div>
+                <div class="status-badge" id="room-id-display">ROOM: ----</div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-xs text-muted uppercase">Time Remaining</div>
+                    <div class="font-mono text-xl" id="game-timer">00:00</div>
+                </div>
+                <button class="btn-danger" onclick="game.leave()">Exit</button>
+            </div>
+        </header>
+
+        <div class="arena-body">
+            <!-- Left Main Panel -->
+            <div class="main-panel">
+                <div class="split-view">
+                    <!-- Problem Description -->
+                    <div class="problem-pane">
+                        <div class="problem-header">
+                            <span>Challenge</span>
+                            <select id="lang-select" style="width: auto; padding: 4px 8px; font-size: 0.8rem;" onchange="editor.setLang(this.value)">
+                                <option value="javascript">JavaScript</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                                <option value="cpp">C++</option>
+                            </select>
+                        </div>
+                        <div class="problem-content" id="problem-display">
+                            <!-- Problem HTML -->
+                        </div>
+                    </div>
+                    
+                    <!-- Code Editor -->
+                    <div class="editor-pane">
+                        <div class="editor-header">
+                            <span id="file-name">solution.js</span>
+                            <div class="flex gap-2">
+                                <button class="btn-secondary" style="padding: 4px 12px; font-size: 0.8rem;" onclick="editor.resetToTemplate()">Reset</button>
+                                <button class="btn-secondary" style="padding: 4px 12px; font-size: 0.8rem;" onclick="editor.run()">▶ Run</button>
+                                <button class="btn-success" style="padding: 4px 12px; font-size: 0.8rem;" onclick="editor.submit()">Submit</button>
+                            </div>
+                        </div>
+                        <div class="editor-wrapper">
+                            <div class="line-numbers" id="line-numbers">1</div>
+                            <textarea id="code-editor" spellcheck="false" oninput="editor.update()" onkeydown="editor.handleTab(event)" onscroll="editor.syncScroll()"></textarea>
+                            <div class="save-indicator" id="save-indicator">Draft Saved</div>
+                        </div>
+
+                        <!-- Console Drawer -->
+                        <div id="console-drawer">
+                            <div class="console-header" onclick="consolePanel.toggle()">
+                                <span>Terminal / Output</span>
+                                <span class="text-muted">▼</span>
+                            </div>
+                            <div class="console-output" id="console-output">
+                                <div class="log-entry log-info">Ready to compile...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Social Panel -->
+            <div class="side-panel">
+                <div class="panel-block" style="flex: 1.2;">
+                    <div class="panel-title flex justify-between">
+                        <span>Leaderboard</span>
+                        <span id="player-count">0/20</span>
+                    </div>
+                    <div class="leaderboard" id="leaderboard-list">
+                        <!-- Players -->
+                    </div>
+                </div>
+                <div class="panel-block" style="flex: 1;">
+                    <div class="panel-title">Live Chat</div>
+                    <div class="chat-box">
+                        <div class="chat-messages" id="chat-history"></div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" placeholder="Say something..." onkeypress="if(event.key === 'Enter') game.sendChat()">
+                            <button class="btn-primary" style="padding: 5px 10px;" onclick="game.sendChat()">→</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODALS -->
+    <!-- Create Room Modal -->
+    <div id="create-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">Create New Battle</div>
+            <div class="modal-body">
+                <p class="text-sm text-muted" style="margin-bottom: 1rem;">Select a challenge for the arena:</p>
+                <div id="create-prob-list">
+                    <!-- Problems injected here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="ui.closeModal('create-modal')">Cancel</button>
+                <button class="btn-primary" onclick="game.createRoom()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Room Modal -->
+    <div id="join-modal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">Join Battle</div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="text-sm text-muted block" style="margin-bottom: 5px;">Room Code</label>
+                    <input type="text" id="join-code-input" placeholder="ABCD-1234" style="text-transform: uppercase; font-family: var(--font-mono); letter-spacing: 1px;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="ui.closeModal('join-modal')">Cancel</button>
+                <button class="btn-primary" onclick="game.joinRoom()">Join</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA LAYER ---
+        const PROBLEMS = [
+            {
+                id: 'prob_1',
+                title: "Two Sum",
+                diff: "Easy",
+                desc: "Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.",
+                examples: [
+                    { in: "nums = [2,7,11,15], target = 9", out: "[0,1]" },
+                    { in: "nums = [3,2,4], target = 6", out: "[1,2]" }
+                ],
+                templates: {
+                    javascript: `function solution(nums, target) {\n    return [];\n}`,
+                    python: `def solution(nums, target):\n    return []`,
+                    java: `class Solution {\n    public int[] solution(int[] nums, int target) {\n        return new int[]{};\n    }\n}`,
+                    cpp: `vector<int> solution(vector<int>& nums, int target) {\n    return {};\n}`
+                }
+            },
+            {
+                id: 'prob_2',
+                title: "Palindrome Number",
+                diff: "Medium",
+                desc: "Given an integer `x`, return `true` if `x` is a palindrome, and `false` otherwise.",
+                examples: [
+                    { in: "x = 121", out: "true" },
+                    { in: "x = -121", out: "false" }
+                ],
+                templates: {
+                    javascript: `function solution(x) {\n    return false;\n}`,
+                    python: `def solution(x):\n    return False`,
+                    java: `class Solution {\n    public boolean solution(int x) {\n        return false;\n    }\n}`,
+                    cpp: `bool solution(int x) {\n    return false;\n}`
+                }
+            },
+            {
+                id: 'prob_3',
+                title: "Maximum Subarray",
+                diff: "Hard",
+                desc: "Given an integer array `nums`, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum.",
+                examples: [
+                    { in: "nums = [-2,1,-3,4,-1,2,1,-5,4]", out: "6" },
+                    { in: "nums = [1]", out: "1" }
+                ],
+                templates: {
+                    javascript: `function solution(nums) {\n    return 0;\n}`,
+                    python: `def solution(nums):\n    return 0`,
+                    java: `class Solution {\n    public int solution(int[] nums) {\n        return 0;\n    }\n}`,
+                    cpp: `int solution(vector<int>& nums) {\n    return 0;\n}`
+                }
+            }
+        ];
+
+        // --- 2. NETWORKING (BroadcastChannel + LocalStorage Registry) ---
+        const network = {
+            channel: new BroadcastChannel('codearena_lobby'),
+            
+            init() {
+                this.channel.onmessage = (event) => {
+                    const { type, payload } = event.data;
+                    
+                    if (type === 'room_created') {
+                        // IMPORTANT: Save room details to LocalStorage for persistence
+                        localStorage.setItem(`ca_room_${payload.code}`, JSON.stringify(payload));
+                        game.addRemoteRoom(payload);
+                        ui.toast(`New room available: ${payload.code}`, "info");
+                    } 
+                    else if (type === 'chat_message' && game.state.activeRoom === payload.roomCode) {
+                        ui.renderChat(payload.user, payload.text, false);
+                    }
+                    else if (type === 'player_joined' && game.state.activeRoom === payload.roomCode) {
+                         ui.toast(`${payload.user} joined the room!`, "info");
+                    }
+                };
+            },
+
+            broadcastCreate(roomData) {
+                this.channel.postMessage({ type: 'room_created', payload: roomData });
+            },
+
+            broadcastChat(roomCode, user, text) {
+                this.channel.postMessage({ type: 'chat_message', payload: { roomCode, user, text } });
+            },
+            
+            broadcastJoin(roomCode, user) {
+                this.channel.postMessage({ type: 'player_joined', payload: { roomCode, user } });
+            }
+        };
+
+        // --- 3. AUTOSAVE DRAFTS ---
+        const drafts = {
+            save: (code) => {
+                if(!game.state.activeRoom) return;
+                const key = `codearena_draft_${game.state.activeRoom}_${editor.currentLang}`;
+                localStorage.setItem(key, code);
+                
+                const indicator = document.getElementById('save-indicator');
+                indicator.classList.add('visible');
+                setTimeout(() => indicator.classList.remove('visible'), 2000);
+            },
+            load: () => {
+                if(!game.state.activeRoom) return null;
+                const key = `codearena_draft_${game.state.activeRoom}_${editor.currentLang}`;
+                return localStorage.getItem(key);
+            },
+            clear: () => {
+                if(!game.state.activeRoom) return;
+                const key = `codearena_draft_${game.state.activeRoom}_${editor.currentLang}`;
+                localStorage.removeItem(key);
+            }
+        };
+
+        // --- 4. AUTHENTICATION ---
+        const auth = {
+            user: JSON.parse(localStorage.getItem('ca_user')) || null,
+            isLoginMode: true,
+
+            init() {
+                network.init(); 
+                if (this.user) {
+                    ui.showView('dashboard-view');
+                    ui.updateUserDisplay();
+                    game.refreshLobby();
+                } else {
+                    ui.showView('auth-view');
+                    this.renderForm();
+                }
+            },
+
+            toggleMode() {
+                this.isLoginMode = !this.isLoginMode;
+                this.renderForm();
+            },
+
+            renderForm() {
+                const container = document.getElementById('auth-container');
+                const title = this.isLoginMode ? "Login to CodeArena" : "Join the Elite";
+                const btnText = this.isLoginMode ? "Log In" : "Sign Up";
+                const toggleText = this.isLoginMode ? "Need an account?" : "Already have an account?";
+                const toggleBtn = this.isLoginMode ? "Sign Up" : "Log In";
+
+                container.innerHTML = `
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="text-sm text-muted block mb-2">Username</label>
+                        <input type="text" id="auth-user" placeholder="Enter username">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label class="text-sm text-muted block mb-2">Password</label>
+                        <input type="password" id="auth-pass" placeholder="••••••••">
+                    </div>
+                    <button class="btn-primary w-full" style="width:100%" onclick="auth.submit()">${btnText}</button>
+                    
+                    <div class="text-center mt-4" style="margin-top: 1.5rem; font-size: 0.9rem;">
+                        <span class="text-muted">${toggleText}</span>
+                        <button class="btn-link" style="margin-left: 5px;" onclick="auth.toggleMode()">${toggleBtn}</button>
+                    </div>
+                `;
+            },
+
+            submit() {
+                const user = document.getElementById('auth-user').value;
+                if (!user) return ui.toast("Username is required", "error");
+                
+                this.user = { name: user, id: Math.random().toString(36).substr(2, 9), avatar: `https://picsum.photos/seed/${user}/50/50` };
+                localStorage.setItem('ca_user', JSON.stringify(this.user));
+                
+                ui.toast(`Welcome, ${user}!`, "success");
+                ui.showView('dashboard-view');
+                ui.updateUserDisplay();
+                game.refreshLobby();
+            },
+
+            logout() {
+                localStorage.removeItem('ca_user');
+                location.reload();
+            }
+        };
+
+        // --- 5. GAME ENGINE ---
+        const game = {
+            state: {
+                activeRoom: null,
+                players: [],
+                timer: 900, 
+                problem: null,
+                interval: null,
+                selectedProblemId: null 
+            },
+
+            refreshLobby() {
+                const list = document.getElementById('lobby-list');
+                list.innerHTML = '';
+                
+                // 1. Fake Rooms
+                for (let i = 0; i < 3; i++) {
+                    const prob = PROBLEMS[Math.floor(Math.random() * PROBLEMS.length)];
+                    const code = Math.random().toString(36).substr(2, 6).toUpperCase();
+                    this.renderRoomCard(list, { code, prob, players: Math.floor(Math.random() * 10), host: "BotHost", isLocal: false });
+                }
+                
+                // 2. Load any locally created rooms from Storage (incase broadcast missed)
+                // (Optional cleanup/sync logic could go here)
+            },
+            
+            addRemoteRoom(roomData) {
+                const list = document.getElementById('lobby-list');
+                if (document.getElementById(`room-${roomData.code}`)) return;
+                
+                const prob = PROBLEMS.find(p => p.id === roomData.problemId);
+                this.renderRoomCard(list, { ...roomData, prob, host: "Remote Player", isLocal: true });
+            },
+            
+            renderRoomCard(container, data) {
+                const el = document.createElement('div');
+                el.id = `room-${data.code}`;
+                el.className = `room-card ${data.isLocal ? 'local-room' : ''}`;
+                el.innerHTML = `
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xl" style="font-weight:800; letter-spacing:1px;">${data.code}</span>
+                        <span class="status-badge ${data.isLocal ? 'local-badge' : ''}">${data.players || 1} Playing</span>
+                    </div>
+                    <div class="text-sm text-muted mb-4">${data.prob ? data.prob.title : 'Loading...'}</div>
+                    <div class="flex justify-between items-center">
+                        <div class="text-xs text-muted">Host: ${data.host}</div>
+                        <button class="btn-primary" style="font-size:0.8rem; padding: 6px 12px;" onclick="game.quickJoin('${data.code}')">Join</button>
+                    </div>
+                `;
+                container.appendChild(el);
+            },
+
+            initCreateModal() {
+                const list = document.getElementById('create-prob-list');
+                list.innerHTML = '';
+                PROBLEMS.forEach((p, idx) => {
+                    const div = document.createElement('div');
+                    const isActive = this.state.selectedProblemId === p.id ? 'active' : (idx === 0 && !this.state.selectedProblemId ? 'active' : '');
+                    
+                    div.className = `prob-select-item ${isActive}`;
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight:600">${p.title}</div>
+                            <div class="text-xs text-muted">${p.diff}</div>
+                        </div>
+                        <div class="text-xs text-muted">15m • ${p.examples.length} Tests</div>
+                    `;
+                    div.onclick = () => {
+                        document.querySelectorAll('.prob-select-item').forEach(el => el.classList.remove('active'));
+                        div.classList.add('active');
+                        this.state.selectedProblemId = p.id;
+                    };
+                    list.appendChild(div);
+                });
+            },
+
+            createRoom() {
+                if(!this.state.selectedProblemId) {
+                    this.state.selectedProblemId = PROBLEMS[0].id;
+                }
+                
+                const problem = PROBLEMS.find(p => p.id === this.state.selectedProblemId);
+                const roomCode = Math.random().toString(36).substr(2, 6).toUpperCase();
+                
+                // FIX: Save Room Config to LocalStorage (Registry)
+                const roomConfig = {
+                    code: roomCode,
+                    problemId: problem.id,
+                    host: auth.user.name,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(`ca_room_${roomCode}`, JSON.stringify(roomConfig));
+
+                network.broadcastCreate({ code: roomCode, problemId: problem.id });
+                this.startGame(problem, roomCode, true);
+            },
+
+            joinRoom() {
+                const code = document.getElementById('join-code-input').value.trim();
+                if(!code) return ui.toast("Enter a room code", "error");
+
+                // FIX: Lookup the room config in LocalStorage
+                const savedRoomData = localStorage.getItem(`ca_room_${code}`);
+
+                if (savedRoomData) {
+                    const roomData = JSON.parse(savedRoomData);
+                    const problem = PROBLEMS.find(p => p.id === roomData.problemId);
+                    
+                    network.broadcastJoin(code, auth.user.name);
+                    this.startGame(problem, code, false);
+                } else {
+                    ui.toast("Room not found. Make sure it was created in this browser.", "error");
+                }
+            },
+            
+            quickJoin(code) {
+                // Find room in storage
+                const savedRoomData = localStorage.getItem(`ca_room_${code}`);
+                let problem;
+                
+                if (savedRoomData) {
+                    const roomData = JSON.parse(savedRoomData);
+                    problem = PROBLEMS.find(p => p.id === roomData.problemId);
+                } else {
+                    // Fallback for demo rooms (BotHost)
+                    problem = PROBLEMS[Math.floor(Math.random() * PROBLEMS.length)];
+                }
+
+                network.broadcastJoin(code, auth.user.name);
+                this.startGame(problem, code, false);
+            },
+
+            startGame(problem, roomCode, isHost) {
+                this.state.problem = problem;
+                this.state.activeRoom = roomCode;
+                this.state.timer = 900;
+                this.state.players = [{
+                    id: auth.user.id,
+                    name: auth.user.name,
+                    score: 0,
+                    lang: 'javascript',
+                    isMe: true,
+                    avatar: auth.user.avatar
+                }];
+                
+                const botCount = 5 + Math.floor(Math.random() * 5);
+                for(let i=0; i<botCount; i++) {
+                    this.state.players.push({
+                        id: 'bot_' + i,
+                        name: ["AlgoRhythm", "BitMaster", "CodeNinja"][i%3],
+                        score: 0,
+                        lang: ['javascript', 'python', 'java', 'cpp'][Math.floor(Math.random()*4)],
+                        isBot: true,
+                        avatar: `https://picsum.photos/seed/${i}/50/50`
+                    });
+                }
+
+                ui.closeModal('create-modal');
+                ui.closeModal('join-modal');
+                ui.showView('arena-view');
+                
+                document.getElementById('room-id-display').textContent = `ROOM: ${roomCode}`;
+                
+                const probHTML = `
+                    <h3>${problem.title} <span style="font-size:0.6em; padding:2px 8px; border-radius:4px; background:#334155; color:${problem.diff === 'Easy' ? '#4ade80' : (problem.diff === 'Medium' ? '#facc15' : '#f87171')}">${problem.diff}</span></h3>
+                    <p>${problem.desc}</p>
+                    ${problem.examples.map(ex => `
+                        <h4>Example:</h4>
+                        <pre><span class="text-muted">Input:</span> ${ex.in}
+<span class="text-muted">Output:</span> ${ex.out}</pre>
+                    `).join('')}
+                `;
+                document.getElementById('problem-display').innerHTML = probHTML;
+
+                editor.setLang('javascript');
+                ui.renderLeaderboard();
+                ui.updateTimer();
+                this.state.interval = setInterval(() => { this.tick(); }, 1000);
+
+                ui.renderChat('System', `Welcome to Room ${roomCode}. Battle starts now!`, true);
+            },
+
+            tick() {
+                this.state.timer--;
+                ui.updateTimer();
+
+                this.state.players.filter(p => p.isBot).forEach(p => {
+                    if (Math.random() < 0.01) {
+                        const scoreGain = 200 + Math.floor(Math.random() * 800);
+                        p.score += scoreGain;
+                        ui.renderLeaderboard();
+                        ui.renderChat('System', `<strong>${p.name}</strong> submitted code! +${scoreGain} pts`, true);
+                    }
+                });
+
+                if (this.state.timer <= 0) {
+                    this.endGame();
+                }
+            },
+
+            leave() {
+                clearInterval(this.state.interval);
+                drafts.clear();
+                // Optional: Delete room from storage if host leaves? 
+                // Leaving it for now so room persists for testing.
+                ui.showView('dashboard-view');
+                game.refreshLobby();
+            },
+
+            sendChat() {
+                const input = document.getElementById('chat-input');
+                const text = input.value.trim();
+                if(!text) return;
+                
+                ui.renderChat(auth.user.name, text, false);
+                network.broadcastChat(this.state.activeRoom, auth.user.name, text);
+                
+                input.value = '';
+            },
+
+            endGame() {
+                clearInterval(this.state.interval);
+                ui.toast("Time's up! Game Over.", "warning");
+                document.getElementById('code-editor').disabled = true;
+            }
+        };
+
+        // --- 6. EDITOR & COMPILER ---
+        const editor = {
+            currentLang: 'javascript',
+            
+            setLang(lang) {
+                this.currentLang = lang;
+                const ext = lang === 'cpp' ? 'cpp' : (lang === 'java' ? 'java' : (lang === 'python' ? 'py' : 'js'));
+                document.getElementById('file-name').textContent = `solution.${ext}`;
+                
+                const savedDraft = drafts.load();
+                
+                if (savedDraft) {
+                    document.getElementById('code-editor').value = savedDraft;
+                    ui.toast("Draft restored", "info");
+                } else {
+                    const template = game.state.problem.templates[lang];
+                    document.getElementById('code-editor').value = template;
+                }
+                this.update();
+            },
+
+            resetToTemplate() {
+                if(confirm("Reset code to template? This will delete your draft.")) {
+                    const template = game.state.problem.templates[this.currentLang];
+                    document.getElementById('code-editor').value = template;
+                    drafts.clear();
+                    this.update();
+                }
+            },
+
+            update() {
+                const el = document.getElementById('code-editor');
+                const lines = el.value.split('\n').length;
+                document.getElementById('line-numbers').innerHTML = Array(lines).fill(0).map((_, i) => i + 1).join('<br>');
+                
+                if(this.saveTimeout) clearTimeout(this.saveTimeout);
+                this.saveTimeout = setTimeout(() => {
+                    drafts.save(el.value);
+                }, 1000);
+            },
+
+            handleTab(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = e.target.selectionStart;
+                    const end = e.target.selectionEnd;
+                    e.target.value = e.target.value.substring(0, start) + "    " + e.target.value.substring(end);
+                    e.target.selectionStart = e.target.selectionEnd = start + 4;
+                    this.update();
+                }
+            },
+            
+            syncScroll() {
+                const el = document.getElementById('code-editor');
+                document.getElementById('line-numbers').scrollTop = el.scrollTop;
+            },
+
+            run() {
+                consolePanel.open();
+                consolePanel.log("Compiling...", "info");
+                setTimeout(() => {
+                    if(this.currentLang === 'javascript') {
+                        this.executeJS(false);
+                    } else {
+                        this.simulateExecution(false);
+                    }
+                }, 600);
+            },
+
+            submit() {
+                consolePanel.open();
+                consolePanel.log("Submitting...", "info");
+                setTimeout(() => {
+                    if(this.currentLang === 'javascript') {
+                        const result = this.executeJS(true);
+                        if(result) {
+                            const score = 1200; 
+                            const me = game.state.players.find(p => p.isMe);
+                            me.score = score;
+                            ui.renderLeaderboard();
+                            ui.toast(`Accepted! Score: ${score}`, "success");
+                            drafts.clear();
+                        }
+                    } else {
+                        this.simulateExecution(true);
+                    }
+                }, 1000);
+            },
+
+            executeJS(isSubmit) {
+                const code = document.getElementById('code-editor').value;
+                try {
+                    const userFunc = new Function('nums', 'target', code.includes('solution') ? code : `return ${code}`);
+                    const testInput = [2, 7, 11, 15];
+                    const testTarget = 9;
+                    const start = performance.now();
+                    const result = userFunc(testInput, testTarget);
+                    const time = (performance.now() - start).toFixed(2);
+                    
+                    if (JSON.stringify(result) === JSON.stringify([0, 1])) {
+                        consolePanel.log(`Test Case 1: Passed (${time}ms)`, "success");
+                        if(isSubmit) return true;
+                    } else {
+                        consolePanel.log(`Test Case 1: Failed. Expected [0,1], got ${JSON.stringify(result)}`, "error");
+                        if(isSubmit) return false;
+                    }
+                } catch (e) {
+                    consolePanel.log(`Runtime Error: ${e.message}`, "error");
+                    return false;
+                }
+            },
+
+            simulateExecution(isSubmit) {
+                setTimeout(() => {
+                    consolePanel.log(`Compiling ${this.currentLang}...`, "info");
+                    setTimeout(() => {
+                        consolePanel.log("Running Test Case 1...", "info");
+                        setTimeout(() => {
+                            if(isSubmit) {
+                                if(Math.random() > 0.2) {
+                                    consolePanel.log("Test Case 1: Passed", "success");
+                                    const score = 800 + Math.floor(Math.random() * 500);
+                                    const me = game.state.players.find(p => p.isMe);
+                                    me.score = score;
+                                    ui.renderLeaderboard();
+                                    ui.toast(`Accepted! Score: ${score}`, "success");
+                                    drafts.clear();
+                                } else {
+                                    consolePanel.log("Test Case 1: Wrong Answer", "error");
+                                    ui.toast("Wrong Answer", "error");
+                                }
+                            } else {
+                                consolePanel.log("Test Case 1: Passed", "success");
+                            }
+                        }, 800);
+                    }, 500);
+                }, 200);
+            }
+        };
+
+        // --- 7. UI MANAGER ---
+        const ui = {
+            showView(id) {
+                document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+                document.getElementById(id).classList.remove('hidden');
+            },
+
+            updateUserDisplay() {
+                document.getElementById('dash-username').textContent = auth.user.name;
+            },
+
+            toast(msg, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const el = document.createElement('div');
+                el.className = `toast ${type}`;
+                el.innerHTML = `<span>${msg}</span>`;
+                container.appendChild(el);
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateX(100%)';
+                    setTimeout(() => el.remove(), 300);
+                }, 3000);
+            },
+
+            openModal(id) {
+                document.getElementById(id).classList.remove('hidden');
+                if(id === 'create-modal') game.initCreateModal();
+                if(id === 'join-modal') document.getElementById('join-code-input').value = '';
+            },
+
+            closeModal(id) {
+                document.getElementById(id).classList.add('hidden');
+            },
+
+            updateTimer() {
+                const m = Math.floor(game.state.timer / 60).toString().padStart(2, '0');
+                const s = (game.state.timer % 60).toString().padStart(2, '0');
+                const el = document.getElementById('game-timer');
+                el.textContent = `${m}:${s}`;
+                if(game.state.timer < 60) el.style.color = '#ef4444';
+                else el.style.color = 'var(--text-main)';
+            },
+
+            renderLeaderboard() {
+                const list = document.getElementById('leaderboard-list');
+                document.getElementById('player-count').textContent = `${game.state.players.length}/20`;
+                const sorted = [...game.state.players].sort((a, b) => b.score - a.score);
+                list.innerHTML = sorted.map((p, i) => `
+                    <div class="lb-row ${p.isMe ? 'highlight' : ''}">
+                        <div class="lb-rank">${i + 1}</div>
+                        <div class="lb-info">
+                            <div class="lb-name">${p.name}</div>
+                            <div class="lb-lang">${p.lang}</div>
+                        </div>
+                        <div class="lb-score">${p.score}</div>
+                    </div>
+                `).join('');
+            },
+
+            renderChat(user, text, isSystem) {
+                const history = document.getElementById('chat-history');
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'chat-msg';
+                const senderClass = isSystem ? 'system' : '';
+                const senderName = isSystem ? 'System' : user;
+                
+                msgDiv.innerHTML = `<span class="chat-sender ${senderClass}">${senderName}:</span> ${text}`;
+                history.appendChild(msgDiv);
+                history.scrollTop = history.scrollHeight;
+            }
+        };
+
+        const consolePanel = {
+            open() { document.getElementById('console-drawer').classList.add('open'); },
+            close() { document.getElementById('console-drawer').classList.remove('open'); },
+            toggle() { document.getElementById('console-drawer').classList.toggle('open'); },
+            clear() { document.getElementById('console-output').innerHTML = ''; },
+            log(msg, type) {
+                const out = document.getElementById('console-output');
+                const div = document.createElement('div');
+                div.className = `log-entry log-${type}`;
+                div.textContent = `> ${msg}`;
+                out.appendChild(div);
+                out.scrollTop = out.scrollHeight;
+            }
+        };
+
+        window.onload = () => { auth.init(); };
+
+    </script>
+</body>
+</html>
